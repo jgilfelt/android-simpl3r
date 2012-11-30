@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+	<!-- never store your S3 credentials like this in a real app! -->
+    <string name="s3_key">YOUR_S3_KEY</string>
+    <string name="s3_secret">YOUR_S3_SECRET</string>
+    <string name="s3_bucket">YOUR_S3_BUCKET</string>
+    
+</resources>
