@@ -59,38 +59,4 @@ public class SharedPreferencesCompat {
         editor.commit();
     }
     
-    
-    public static void setStringArrayPref(Context context, String key, ArrayList<String> values) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        SharedPreferences.Editor editor = prefs.edit();
-        JSONArray a = new JSONArray();
-        for (int i = 0; i < values.size(); i++) {
-            a.put(values.get(i));
-        }
-        if (!values.isEmpty()) {
-            editor.putString(key, a.toString());
-        } else {
-            editor.putString(key, null);
-        }
-        apply(editor);
-    }
-
-    public static ArrayList<String> getStringArrayPref(Context context, String key) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String json = prefs.getString(key, null);
-        ArrayList<String> values = new ArrayList<String>();
-        if (json != null) {
-            try {
-                JSONArray a = new JSONArray(json);
-                for (int i = 0; i < a.length(); i++) {
-                    String val = a.optString(i);
-                    values.add(val);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        return values;
-    }
-    
 }
