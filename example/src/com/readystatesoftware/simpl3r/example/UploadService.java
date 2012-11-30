@@ -63,8 +63,10 @@ public class UploadService extends IntentService {
 		
 		final String msg = "Uploading " + s3ObjectKey + "...";
 		
+		// create a new uploader for this file
 		uploader = new Uploader(this, s3Client, s3BucketName, s3ObjectKey, fileToUpload);
 
+		// listen for progress updates and broadcast/notify them appropriately
 		uploader.setProgressListener(new UploadProgressListener() {			
 			@Override
 			public void progressChanged(ProgressEvent progressEvent,
@@ -76,12 +78,13 @@ public class UploadService extends IntentService {
 			}
 		});
 
+		// broadcast/notify that our upload is starting
 		Notification notification = buildNotification(msg, 0);
 		nm.notify(NOTIFY_ID_UPLOAD, notification);
 		broadcastState(s3ObjectKey, 0, msg);
 		
 		try {
-			String s3Location = uploader.start();
+			String s3Location = uploader.start(); // initiate the upload
 			broadcastState(s3ObjectKey, -1, "File successfully uploaded to " + s3Location);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -106,8 +109,7 @@ public class UploadService extends IntentService {
 		sendBroadcast(intent);
 	}
 
-	private Notification buildNotification(String msg, int progress) {
-		
+	private Notification buildNotification(String msg, int progress) {	
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setWhen(System.currentTimeMillis());
 		builder.setTicker(msg);
@@ -120,14 +122,12 @@ public class UploadService extends IntentService {
 		Intent notificationIntent = new Intent(this, MainActivity.class);
 		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
 		builder.setContentIntent(contentIntent);
 		
 		return builder.build();
-
 	}
 	
-	public BroadcastReceiver uploadCancelReceiver = new BroadcastReceiver() {
+	private BroadcastReceiver uploadCancelReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
         	if (uploader != null) {
@@ -135,7 +135,6 @@ public class UploadService extends IntentService {
         	}
         }
     };
-	
 	
 	private String md5(String s) {
 		try {
