@@ -30,4 +30,11 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>Simpl3r_src</name>
+			<type>2</type>
+			<location>/Users/jgilfelt/Documents/workspace_fieldnotes/Simpl3r/src</location>
+		</link>
+	</linkedResources>
 </projectDescription>
