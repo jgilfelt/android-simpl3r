@@ -1,3 +1,18 @@
+/***
+ * Copyright (c) 2012 readyState Software Ltd
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License. You may obtain
+ * a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ */
+
 package com.readystatesoftware.simpl3r;
 
 import java.io.File;
@@ -42,10 +57,8 @@ public class Uploader {
 	private File file;
 	
 	private SharedPreferences prefs;
-	private long partSize = MIN_DEFAULT_PART_SIZE;
-	
-	private UploadProgressListener progressListener; 
-	
+	private long partSize = MIN_DEFAULT_PART_SIZE;	
+	private UploadProgressListener progressListener;
 	private long bytesUploaded = 0;
 	private boolean userInterrupted = false;
 	private boolean userAborted = false;
@@ -135,7 +148,7 @@ public class Uploader {
                     // broadcast progress
                     int percent = (int) ((bytesUploaded * 100) / contentLength);
                     if (progressListener != null) {
-                    	progressListener.progressChanged(progressEvent, percent);
+                    	progressListener.progressChanged(progressEvent, bytesUploaded, percent);
                     }
                     
                 }
@@ -147,7 +160,7 @@ public class Uploader {
             
             partETags.add(result.getPartETag());
             
-            /// start resume code
+            // cache the part progress for this upload
             if (k == 1) {
             	// first successful part uploaded, store uploadID
             	Editor edit = prefs.edit().putString(s3key + PREFS_UPLOAD_ID, uploadId);
@@ -161,7 +174,6 @@ public class Uploader {
             ArrayList<String> etags = SharedPreferencesUtils.getStringArrayPref(prefs, s3key + PREFS_ETAGS);
             etags.add(serialEtag);
             SharedPreferencesUtils.setStringArrayPref(prefs, s3key + PREFS_ETAGS, etags);
-            /// end resume code
             
             filePosition += partSize;
         }
@@ -223,7 +235,7 @@ public class Uploader {
 	}
 
 	public interface UploadProgressListener {
-		public void progressChanged(ProgressEvent progressEvent, int percentUploaded);
+		public void progressChanged(ProgressEvent progressEvent, long bytesUploaded, int percentUploaded);
 	}
 	
 }
