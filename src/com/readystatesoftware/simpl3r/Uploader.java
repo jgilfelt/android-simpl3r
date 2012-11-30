@@ -71,43 +71,44 @@ public class Uploader {
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
 	}
 	
+	/**
+	 * Initiate a multipart file upload to Amazon S3
+	 * 
+	 * @return the URL of a successfully uploaded file
+	 */
 	public String start() {
 		
-		// initialise
+		// initialize
 		List<PartETag> partETags = new ArrayList<PartETag>();
 		final long contentLength = file.length();
 		long filePosition = 0;
 		int startPartNumber = 1;
 		
+		userInterrupted = false;
+		userAborted = false;
 		bytesUploaded = 0;
 		
 		// check if we can resume an incomplete download
-		String uploadId = prefs.getString(s3key + PREFS_UPLOAD_ID, null);
+		String uploadId = getCachedUploadId();
 		
 		if (uploadId != null) {
 			// we can resume the download
-			Log.d(TAG, "<< resuming upload");
+			Log.i(TAG, "resuming upload for " + uploadId);
 			
 			// get the cached etags
-			ArrayList<String> etags = SharedPreferencesUtils.getStringArrayPref(prefs, s3key + PREFS_ETAGS);
-			for (String etagString : etags) {
-				String partNum = etagString.substring(0, etagString.indexOf(PREFS_ETAG_SEP));
-				String partTag = etagString.substring(etagString.indexOf(PREFS_ETAG_SEP) + 2, etagString.length());
-				
-				Log.d(TAG, "<< cached etag: " + partNum + " - " + partTag);
-				
-				PartETag etag = new PartETag(Integer.parseInt(partNum), partTag);
-				partETags.add(etag);
-			}
-			
+			List<PartETag> cachedEtags = getCachedPartEtags();
+			partETags.addAll(cachedEtags);
+						
 			// calculate the start position for resume
-			startPartNumber = etags.size() + 1;
+			startPartNumber = cachedEtags.size() + 1;
 			filePosition = (startPartNumber -1) * partSize;
 			bytesUploaded = (int) filePosition;
+			
+			Log.i(TAG, "resuming at part " + startPartNumber + " position " + filePosition);
 		
 		} else {
 			// initiate a new multi part upload
-			Log.d(TAG, "<< initiating upload");
+			Log.i(TAG, "initiating new upload");
 			
 	        InitiateMultipartUploadRequest initRequest = new InitiateMultipartUploadRequest(s3bucketName, s3key);
 	        configureInitiateRequest(initRequest);
@@ -122,7 +123,7 @@ public class Uploader {
         	
             long thisPartSize = Math.min(partSize, (contentLength - filePosition));
             
-            Log.d(TAG, "<< " + uploadId + " init part " + k + " size = " + thisPartSize);
+            Log.i(TAG, "starting file part " + k + " with size " + thisPartSize);
             
             UploadPartRequest uploadRequest = new UploadPartRequest().withBucketName(s3bucketName)
                     .withKey(s3key).withUploadId(uploadId)
@@ -133,17 +134,20 @@ public class Uploader {
                 public void progressChanged(ProgressEvent progressEvent) {
                     
                 	// bail out if user cancelled
+                	// TODO calling shutdown too brute force?
                     if (userInterrupted) {
                 		s3Client.shutdown(); 
                 		throw new AmazonClientException("User interrupted");
                 	} else if (userAborted) {
+                		// aborted requests cannot be resumed, so clear any cached etags
+                		clearProgressCache();
                     	s3Client.abortMultipartUpload(abortRequest);
                     	s3Client.shutdown();
                     }
                     
                     bytesUploaded += progressEvent.getBytesTransfered();
                     
-                    Log.d(TAG, "bytesUploaded=" + bytesUploaded);
+                    //Log.d(TAG, "bytesUploaded=" + bytesUploaded);
                     
                     // broadcast progress
                     int percent = (int) ((bytesUploaded * 100) / contentLength);
@@ -162,20 +166,12 @@ public class Uploader {
             
             // cache the part progress for this upload
             if (k == 1) {
-            	// first successful part uploaded, store uploadID
-            	Editor edit = prefs.edit().putString(s3key + PREFS_UPLOAD_ID, uploadId);
-            	SharedPreferencesCompat.apply(edit);
-            	// create empty etag array
-            	ArrayList<String> etags = new ArrayList<String>();
-            	SharedPreferencesUtils.setStringArrayPref(prefs, s3key + PREFS_ETAGS, etags);
+            	initProgressCache(uploadId);
             }
             // store part etag
-            String serialEtag = result.getPartETag().getPartNumber() + PREFS_ETAG_SEP + result.getPartETag().getETag();
-            ArrayList<String> etags = SharedPreferencesUtils.getStringArrayPref(prefs, s3key + PREFS_ETAGS);
-            etags.add(serialEtag);
-            SharedPreferencesUtils.setStringArrayPref(prefs, s3key + PREFS_ETAGS, etags);
+            cachePartEtag(result);
             
-            filePosition += partSize;
+            filePosition += thisPartSize;
         }
         
         CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest(
@@ -185,14 +181,54 @@ public class Uploader {
         CompleteMultipartUploadResult result = s3Client.completeMultipartUpload(compRequest);
         bytesUploaded = 0;
         
-        // clear the cached uploadId and etags as file is now complete
+        Log.i(TAG, "upload complete for " + uploadId);
+        
+        clearProgressCache();
+ 
+        return result.getLocation();
+		
+	}
+
+	private String getCachedUploadId() {
+		return prefs.getString(s3key + PREFS_UPLOAD_ID, null);
+	}
+	
+	private List<PartETag> getCachedPartEtags() {
+		List<PartETag> result = new ArrayList<PartETag>();		
+		// get the cached etags
+		ArrayList<String> etags = SharedPreferencesUtils.getStringArrayPref(prefs, s3key + PREFS_ETAGS);
+		for (String etagString : etags) {
+			String partNum = etagString.substring(0, etagString.indexOf(PREFS_ETAG_SEP));
+			String partTag = etagString.substring(etagString.indexOf(PREFS_ETAG_SEP) + 2, etagString.length());
+						
+			PartETag etag = new PartETag(Integer.parseInt(partNum), partTag);
+			result.add(etag);
+		}
+		return result;
+	}
+
+	private void cachePartEtag(UploadPartResult result) {
+		String serialEtag = result.getPartETag().getPartNumber() + PREFS_ETAG_SEP + result.getPartETag().getETag();
+		ArrayList<String> etags = SharedPreferencesUtils.getStringArrayPref(prefs, s3key + PREFS_ETAGS);
+		etags.add(serialEtag);
+		SharedPreferencesUtils.setStringArrayPref(prefs, s3key + PREFS_ETAGS, etags);
+	}
+
+	private void initProgressCache(String uploadId) {
+		// store uploadID
+		Editor edit = prefs.edit().putString(s3key + PREFS_UPLOAD_ID, uploadId);
+		SharedPreferencesCompat.apply(edit);
+		// create empty etag array
+		ArrayList<String> etags = new ArrayList<String>();
+		SharedPreferencesUtils.setStringArrayPref(prefs, s3key + PREFS_ETAGS, etags);
+	}
+
+	private void clearProgressCache() {
+		// clear the cached uploadId and etags
         Editor edit = prefs.edit();
         edit.remove(s3key + PREFS_UPLOAD_ID);
         edit.remove(s3key + PREFS_ETAGS);
     	SharedPreferencesCompat.apply(edit);
- 
-        return result.getLocation();
-		
 	}
 	
 	public void interrupt() {

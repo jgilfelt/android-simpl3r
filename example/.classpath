@@ -5,8 +5,8 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry kind="lib" path="/Simpl3r/libs/android-support-v4.jar"/>
-	<classpathentry kind="lib" path="/Simpl3r/libs/aws-android-sdk-1.4.3-core.jar"/>
-	<classpathentry kind="lib" path="/Simpl3r/libs/aws-android-sdk-1.4.3-s3.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Simpl3r/libs/android-support-v4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Simpl3r/libs/aws-android-sdk-1.4.3-core.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Simpl3r/libs/aws-android-sdk-1.4.3-s3.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
