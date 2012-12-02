@@ -50,7 +50,7 @@ This library depends upon the [AWS SDK for Android](http://aws.amazon.com/sdkfor
 Building
 --------
 
-Run `ant jar` from the project director or simply download a pre-built version from the downloads section of this GitHub repository.
+Run `ant jar` from the project directory or simply download a pre-built version from the downloads section of this GitHub repository.
 
 Credits
 -------
