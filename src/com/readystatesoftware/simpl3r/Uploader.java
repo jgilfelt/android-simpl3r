@@ -259,8 +259,8 @@ public class Uploader {
 	}
 
 	public void setPartSize(long partSize) {
-		if (partSize > MIN_DEFAULT_PART_SIZE) {
-			throw new IllegalStateException("Part size exceeds S3 minimum of " + MIN_DEFAULT_PART_SIZE);
+		if (partSize < MIN_DEFAULT_PART_SIZE) {
+			throw new IllegalStateException("Part size is less than S3 minimum of " + MIN_DEFAULT_PART_SIZE);
 		} else {
 			this.partSize = partSize;
 		}	
