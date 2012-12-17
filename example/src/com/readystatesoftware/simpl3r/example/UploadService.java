@@ -22,6 +22,7 @@ import java.security.NoSuchAlgorithmException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ProgressEvent;
+import com.readystatesoftware.simpl3r.UploadIterruptedException;
 import com.readystatesoftware.simpl3r.Uploader;
 import com.readystatesoftware.simpl3r.Uploader.UploadProgressListener;
 
@@ -101,6 +102,8 @@ public class UploadService extends IntentService {
 		try {
 			String s3Location = uploader.start(); // initiate the upload
 			broadcastState(s3ObjectKey, -1, "File successfully uploaded to " + s3Location);
+		} catch (UploadIterruptedException uie) {
+			broadcastState(s3ObjectKey, -1, "User interrupted");
 		} catch (Exception e) {
 			e.printStackTrace();
 			broadcastState(s3ObjectKey, -1, "Error: " + e.getMessage());

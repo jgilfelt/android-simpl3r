@@ -25,7 +25,6 @@ import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
@@ -38,7 +37,6 @@ import com.amazonaws.services.s3.model.ProgressEvent;
 import com.amazonaws.services.s3.model.ProgressListener;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
-
 import com.readystatesoftware.simpl3r.utils.SharedPreferencesCompat;
 import com.readystatesoftware.simpl3r.utils.SharedPreferencesUtils;
 
@@ -137,7 +135,7 @@ public class Uploader {
                 	// TODO calling shutdown too brute force?
                     if (userInterrupted) {
                 		s3Client.shutdown(); 
-                		throw new AmazonClientException("User interrupted");
+                		throw new UploadIterruptedException("User interrupted");
                 	} else if (userAborted) {
                 		// aborted requests cannot be resumed, so clear any cached etags
                 		clearProgressCache();
