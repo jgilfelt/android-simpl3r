@@ -102,7 +102,7 @@ public class Uploader {
 			// calculate the start position for resume
 			startPartNumber = cachedEtags.size() + 1;
 			filePosition = (startPartNumber -1) * partSize;
-			bytesUploaded = (int) filePosition;
+			bytesUploaded = filePosition;
 			
 			Log.i(TAG, "resuming at part " + startPartNumber + " position " + filePosition);
 		
@@ -150,7 +150,8 @@ public class Uploader {
                     //Log.d(TAG, "bytesUploaded=" + bytesUploaded);
                     
                     // broadcast progress
-                    int percent = (int) ((bytesUploaded * 100) / contentLength);
+                    float fpercent = ((bytesUploaded * 100) / contentLength);
+                    int percent = Math.round(fpercent);
                     if (progressListener != null) {
                     	progressListener.progressChanged(progressEvent, bytesUploaded, percent);
                     }
