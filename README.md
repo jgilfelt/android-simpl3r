@@ -14,28 +14,30 @@ Usage
 
 Uploads can be initiated as follows:
 
-    AmazonS3Client s3Client = new AmazonS3Client(
-        new BasicAWSCredentials(YOUR_S3_ACCESS_KEY, YOUR_S3_SECRET));
-    
-    File file = new File("path/to/some.file");
-    String s3Key = file.getPath();
-    
-    // create a new uploader for this file
-    Uploader uploader = new Uploader(this, s3Client, YOUR_S3_BUCKETNAME, s3Key, file);
-    
-    // register listener for upload progress updates 
-    uploader.setProgressListener(new UploadProgressListener() {  		
-        @Override
-        public void progressChanged(ProgressEvent progressEvent, 
-                long bytesUploaded, int percentUploaded) {
-		    // broadcast/notify ...
-        }
-    });
-    
-    // initiate the upload
-    String urlLocation = uploader.start();
+<code>
+AmazonS3Client s3Client = new AmazonS3Client(
+    new BasicAWSCredentials(YOUR_S3_ACCESS_KEY, YOUR_S3_SECRET));
 
-Subsequent `Uploader` instances or calls to `start()` using the same `s3key` will attempt to resume the upload from the beginning of the last part that was uploaded successfully. The default `SharedPreferences` for the supplied `Context` are used to cache the part ETags, or you can supply your own `SharedPreferences` instance. You can also supply your own part size to the `Uploader`, but note that the minimum for the S3 API is 5 megabytes.
+File file = new File("path/to/some.file");
+String s3Key = file.getPath();
+
+// create a new uploader for this file
+Uploader uploader = new Uploader(this, s3Client, YOUR_S3_BUCKETNAME, s3Key, file);
+    
+// register listener for upload progress updates 
+uploader.setProgressListener(new UploadProgressListener() {  		
+    @Override
+    public void progressChanged(ProgressEvent progressEvent, 
+            long bytesUploaded, int percentUploaded) {
+        // broadcast/notify ...
+    }
+});
+
+// initiate the upload
+String urlLocation = uploader.start();
+</code>
+
+Subsequent `Uploader` instances or calls to `start()` using the same `s3key` will attempt to resume the upload from the beginning of the last part that was uploaded successfully. A `SharedPreferences` instance for the supplied `Context` is used to cache the part ETags, or you can supply your own. You can also supply your own part size to the `Uploader`, but note that the minimum for the S3 API is 5 megabytes.
 
 This project contains a working example project which more fully demonstrates its usage.
 
