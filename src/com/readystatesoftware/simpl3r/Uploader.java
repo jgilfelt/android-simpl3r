@@ -22,7 +22,6 @@ import java.util.List;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.amazonaws.services.s3.AmazonS3Client;
@@ -45,6 +44,7 @@ public class Uploader {
 	private static final long MIN_DEFAULT_PART_SIZE = 5 * 1024 * 1024;
 	
 	private static final String TAG = "Simpl3r";
+	private static final String PREFS_NAME = "preferences_simpl3r";
 	private static final String PREFS_UPLOAD_ID = "_uploadId";
 	private static final String PREFS_ETAGS = "_etags";
 	private static final String PREFS_ETAG_SEP = "~~";
@@ -66,7 +66,7 @@ public class Uploader {
 		this.s3key = s3key;
 		this.s3bucketName = s3bucketName;
 		this.file = file;
-		prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 	}
 	
 	/**

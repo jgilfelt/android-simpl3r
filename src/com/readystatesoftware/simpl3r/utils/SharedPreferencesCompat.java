@@ -18,14 +18,8 @@ package com.readystatesoftware.simpl3r.utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 /**
  * Reflection utils to call SharedPreferences$Editor.apply when possible,
