@@ -17,11 +17,15 @@ package com.readystatesoftware.simpl3r.example;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -91,7 +95,9 @@ public class MainActivity extends Activity {
 			if (resultCode == RESULT_OK) {  
                 // get path of selected file 
                 Uri uri = data.getData();
-                String path = uri.getPath();
+                String path = getPathFromContentUri(uri);
+                Log.d("S3", "uri=" + uri.toString());
+                Log.d("S3", "path=" + path);
                 // initiate the upload
                 Intent intent = new Intent(this, UploadService.class);
                 intent.putExtra(UploadService.ARG_FILE_PATH, path);
@@ -99,6 +105,26 @@ public class MainActivity extends Activity {
             }
 		}
 		super.onActivityResult(requestCode, resultCode, data);
+	}
+	
+	private String getPathFromContentUri(Uri uri) {
+		String path = uri.getPath();
+		if (uri.toString().startsWith("content://")) {
+			String[] projection = { MediaStore.MediaColumns.DATA };
+			ContentResolver cr = getApplicationContext().getContentResolver();
+			Cursor cursor = cr.query(uri, projection, null, null, null);
+			if (cursor != null) {
+				try {
+					if (cursor.moveToFirst()) {
+						path = cursor.getString(0);
+					}
+				} finally {
+					cursor.close();
+				}
+			}
+
+		}
+		return path;
 	}
 	 
 	private BroadcastReceiver uploadStateReceiver = new BroadcastReceiver() {
